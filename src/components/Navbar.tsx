@@ -1,8 +1,9 @@
-import { Search, Bell, MessageCircle, Plus, Camera, X, Clock, TrendingUp, Loader2 } from 'lucide-react';
+import { Search, Bell, MessageCircle, Plus, Camera, X, Clock, TrendingUp, Loader2, Moon, Sun } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import React, { useRef, useState, useEffect } from 'react';
 import { useSearch } from '../context/SearchContext';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { apex } from '../lib/apex';
 
 export function Navbar() {
@@ -11,9 +12,11 @@ export function Navbar() {
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
+  const [localQuery, setLocalQuery] = useState(searchQuery);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [isSearchingSuggestions, setIsSearchingSuggestions] = useState(false);
+  const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -26,28 +29,43 @@ export function Navbar() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Sync localQuery when searchQuery changes from elsewhere (like clearSearch)
+  useEffect(() => {
+    setLocalQuery(searchQuery);
+  }, [searchQuery]);
+
   // Instant Search / Autocomplete
   useEffect(() => {
     const fetchSuggestions = async () => {
-      if (!searchQuery || searchQuery.length < 2) {
+      if (!localQuery || localQuery.length < 2) {
         setSuggestions([]);
         return;
       }
 
       setIsSearchingSuggestions(true);
       try {
-        const results = await apex.collection('pins').searchRecordsWithOSE(searchQuery);
+        const results = await apex.collection('pins').searchRecordsWithOSE(localQuery);
         setSuggestions(results.slice(0, 8)); // Limit to 8 suggestions
-      } catch (err) {
-        console.error("Failed to fetch suggestions:", err);
+      } catch (err: any) {
+        if (!err.message?.includes('Rate limit')) {
+          console.error("Failed to fetch suggestions:", err);
+        }
       } finally {
         setIsSearchingSuggestions(false);
       }
     };
 
-    const debounceTimer = setTimeout(fetchSuggestions, 300);
+    const debounceTimer = setTimeout(fetchSuggestions, 800);
     return () => clearTimeout(debounceTimer);
-  }, [searchQuery]);
+  }, [localQuery]);
+
+  // Debounce context update to prevent Android cursor jumping
+  useEffect(() => {
+    if (searchQuery !== localQuery) {
+      const timer = setTimeout(() => setSearchQuery(localQuery), 50);
+      return () => clearTimeout(timer);
+    }
+  }, [localQuery, searchQuery, setSearchQuery]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -55,6 +73,7 @@ export function Navbar() {
       const reader = new FileReader();
       reader.onloadend = () => {
         setSearchImage(reader.result as string);
+        setLocalQuery('');
         setSearchQuery(''); // Clear text search when image searching
         setIsSearchFocused(false);
         if (location.pathname !== '/') navigate('/');
@@ -64,7 +83,7 @@ export function Navbar() {
   };
 
   const handleTextSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
+    setLocalQuery(e.target.value);
     if (e.target.value && searchImage) setSearchImage(null); // Clear image search when typing
   };
 
@@ -76,6 +95,7 @@ export function Navbar() {
   };
 
   const handleSuggestionClick = (suggestion: string) => {
+    setLocalQuery(suggestion);
     setSearchQuery(suggestion);
     if (searchImage) setSearchImage(null);
     setIsSearchFocused(false);
@@ -85,14 +105,14 @@ export function Navbar() {
   const { user, loading } = useAuth();
 
   return (
-    <nav className="fixed top-0 w-full z-50 bg-ink/80 backdrop-blur-xl border-b border-white/10">
-      <div className="flex items-center justify-between px-4 py-3 gap-4">
+    <nav className="fixed top-0 w-full z-50 bg-ink/80 backdrop-blur-xl border-b border-black/10 dark:border-white/10">
+      <div className="flex items-center justify-between px-4 py-3 gap-4 max-w-[1800px] mx-auto">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-3 group">
           <div className="w-10 h-10 bg-neon rounded-xl flex items-center justify-center transform -rotate-6 shadow-[0_0_15px_rgba(204,255,0,0.3)] group-hover:rotate-0 transition-transform duration-300">
-            <span className="text-ink font-display font-black text-xl">V</span>
+            <span className="text-[#050505] font-display font-black text-xl">V</span>
           </div>
-          <span className="font-display font-bold text-xl hidden md:block tracking-tight group-hover:text-neon transition-colors">VORTEX</span>
+          <span className="font-display font-bold text-xl hidden md:block tracking-tight group-hover:text-neon transition-colors text-ink-invert">VORTEX</span>
         </Link>
 
         {/* Search */}
@@ -103,18 +123,21 @@ export function Navbar() {
             </div>
             <input 
               type="text" 
-              value={searchQuery}
+              value={localQuery}
               onChange={handleTextSearch}
               onFocus={() => setIsSearchFocused(true)}
               onKeyDown={handleKeyDown}
               placeholder="Search for ideas..." 
-              className="w-full bg-surface border border-white/10 rounded-full py-3 pl-12 pr-20 text-sm focus:outline-none focus:border-neon/50 focus:ring-1 focus:ring-neon/50 transition-all placeholder-gray-500 text-white relative z-10"
+              className="w-full bg-surface border border-black/10 dark:border-white/10 rounded-full py-3 pl-12 pr-20 text-sm focus:outline-none focus:border-neon/50 focus:ring-1 focus:ring-neon/50 transition-all placeholder-gray-500 text-ink-invert relative z-10"
             />
             <div className="absolute inset-y-0 right-0 pr-2 flex items-center gap-1 z-10">
-              {searchQuery && (
+              {localQuery && (
                 <button 
-                  onClick={() => setSearchQuery('')} 
-                  className="p-2 text-gray-400 hover:text-white transition-colors"
+                  onClick={() => {
+                    setLocalQuery('');
+                    setSearchQuery('');
+                  }} 
+                  className="p-2 text-gray-400 hover:text-ink-invert transition-colors"
                   title="Clear search"
                 >
                   <X size={16} />
@@ -137,8 +160,8 @@ export function Navbar() {
             </div>
 
             {/* Search Suggestions Dropdown */}
-            {isSearchFocused && (searchQuery || suggestions.length > 0) && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-surface border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50">
+            {isSearchFocused && (localQuery || suggestions.length > 0) && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-surface border border-black/10 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50">
                 <div className="p-2">
                   {isSearchingSuggestions ? (
                     <div className="flex items-center justify-center p-8">
@@ -151,11 +174,11 @@ export function Navbar() {
                         <button
                           key={`${pin.id}-${index}`}
                           onClick={() => handleSuggestionClick(pin.title)}
-                          className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-white/5 rounded-xl transition-colors text-left"
+                          className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-colors text-left"
                         >
                           <Search size={16} className="text-gray-400" />
                           <div className="flex flex-col">
-                            <span className="text-gray-200 text-sm font-medium">{pin.title}</span>
+                            <span className="text-ink-invert text-sm font-medium">{pin.title}</span>
                             {pin.description && (
                               <span className="text-gray-500 text-xs truncate max-w-[400px]">{pin.description}</span>
                             )}
@@ -163,9 +186,9 @@ export function Navbar() {
                         </button>
                       ))}
                     </div>
-                  ) : searchQuery.length >= 2 ? (
+                  ) : localQuery.length >= 2 ? (
                     <div className="px-3 py-4 text-center text-gray-500 text-sm">
-                      No results found for "{searchQuery}"
+                      No results found for "{localQuery}"
                     </div>
                   ) : (
                     <div className="px-3 py-4 text-center text-gray-500 text-sm italic">
@@ -180,30 +203,37 @@ export function Navbar() {
 
         {/* Actions */}
         <div className="flex items-center gap-2 md:gap-4">
+          <button 
+            onClick={toggleTheme} 
+            className="p-2 text-gray-400 hover:text-ink-invert transition-colors rounded-full"
+            title="Toggle theme"
+          >
+            {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+          </button>
           {loading ? (
-            <div className="w-10 h-10 rounded-full bg-white/5 animate-pulse"></div>
+            <div className="w-10 h-10 rounded-full bg-surface animate-pulse"></div>
           ) : user ? (
             <>
-              <Link to="/create" className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white p-2 sm:px-4 sm:py-2 rounded-full text-sm font-medium transition-colors">
+              <Link to="/create" className="flex items-center gap-2 bg-surface hover:bg-black/10 dark:hover:bg-white/20 text-ink-invert p-2 sm:px-4 sm:py-2 rounded-full text-sm font-medium transition-colors border border-black/10 dark:border-white/10">
                 <Plus size={18} />
                 <span className="hidden sm:inline">Create</span>
               </Link>
-              <button className="p-2 text-gray-400 hover:text-white transition-colors hidden sm:block">
+              <button className="p-2 text-gray-400 hover:text-ink-invert transition-colors hidden sm:block">
                 <Bell size={22} />
               </button>
-              <button className="p-2 text-gray-400 hover:text-white transition-colors hidden sm:block">
+              <button className="p-2 text-gray-400 hover:text-ink-invert transition-colors hidden sm:block">
                 <MessageCircle size={22} />
               </button>
-              <Link to="/profile" className="w-10 h-10 rounded-full bg-surface border border-white/10 overflow-hidden ml-2 block">
+              <Link to="/profile" className="w-10 h-10 rounded-full bg-surface border border-black/10 dark:border-white/10 overflow-hidden ml-2 block">
                 <img src={user.avatar || null} alt="Profile" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
               </Link>
             </>
           ) : (
             <>
-              <Link to="/login" className="hidden sm:block text-white hover:text-neon font-medium px-4 py-2 transition-colors">
+              <Link to="/login" className="hidden sm:block text-ink-invert hover:text-neon font-medium px-4 py-2 transition-colors whitespace-nowrap">
                 Log in
               </Link>
-              <Link to="/register" className="bg-neon text-ink hover:bg-white font-bold px-5 py-2 rounded-full transition-colors">
+              <Link to="/register" className="bg-neon text-ink font-bold px-5 py-2 rounded-full transition-colors hover:opacity-90 whitespace-nowrap">
                 Sign up
               </Link>
             </>

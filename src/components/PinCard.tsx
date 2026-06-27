@@ -167,7 +167,7 @@ export function PinCard({ id, image, title, author, height, initiallySaved = fal
       
       <div className="mt-3 px-1 flex items-center justify-between">
         <div className="min-w-0 pr-4">
-          <h3 className="font-medium text-sm text-gray-100 truncate">{title}</h3>
+          <h3 className="font-medium text-sm text-ink-invert truncate">{title}</h3>
           <p className="text-xs text-gray-500 truncate mt-0.5">{author}</p>
         </div>
         <button 

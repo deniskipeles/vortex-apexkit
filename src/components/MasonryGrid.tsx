@@ -26,10 +26,10 @@ export function MasonryGridSkeleton({ count = 15 }: { count?: number }) {
             />
             <div className="mt-3 px-1 flex items-center justify-between">
               <div className="w-2/3">
-                <div className="h-4 bg-white/10 rounded animate-pulse mb-2"></div>
-                <div className="h-3 bg-white/5 rounded animate-pulse w-1/2"></div>
+                <div className="h-4 bg-black/10 dark:bg-white/10 rounded animate-pulse mb-2"></div>
+                <div className="h-3 bg-black/5 dark:bg-white/5 rounded animate-pulse w-1/2"></div>
               </div>
-              <div className="w-6 h-6 bg-white/10 rounded-full animate-pulse"></div>
+              <div className="w-6 h-6 bg-black/10 dark:bg-white/10 rounded-full animate-pulse"></div>
             </div>
           </div>
         );

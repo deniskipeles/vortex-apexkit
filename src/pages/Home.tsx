@@ -5,6 +5,7 @@ import { useSearch } from '../context/SearchContext';
 import { X, ScanSearch } from 'lucide-react';
 import ReactCrop, { type Crop } from 'react-image-crop';
 import { apex } from '../lib/apex';
+import { getCroppedImg } from '../lib/imageUtils';
 import 'react-image-crop/dist/ReactCrop.css';
 
 export function Home() {
@@ -25,7 +26,8 @@ export function Home() {
           // Visual Search
           if (completedCrop && completedCrop.width && completedCrop.height) {
             try {
-              const croppedImage = await getCroppedImg(searchImage, completedCrop);
+              const imgElement = document.querySelector('.ReactCrop img') as HTMLImageElement;
+              const croppedImage = await getCroppedImg(searchImage, completedCrop, imgElement);
               if (croppedImage) {
                 results = await apex.collection('pins').searchImageVector(croppedImage, 20);
               } else {
@@ -72,59 +74,22 @@ export function Home() {
         });
 
         setPins(mappedPins);
-      } catch (err) {
-        console.error("Failed to fetch pins:", err);
-        setPins([]);
+      } catch (err: any) {
+        if (!err.message?.includes('Rate limit')) {
+          console.error("Failed to fetch pins:", err);
+          setPins([]);
+        }
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchPins();
+    const timer = setTimeout(() => {
+      fetchPins();
+    }, 500);
+
+    return () => clearTimeout(timer);
   }, [selectedCategory, searchQuery, searchImage, completedCrop]);
-
-  async function getCroppedImg(imageSrc: string, crop: Crop): Promise<string | null> {
-    return new Promise((resolve, reject) => {
-      const image = new Image();
-      image.src = imageSrc;
-      image.crossOrigin = 'anonymous';
-      image.onload = () => {
-        const canvas = document.createElement('canvas');
-        const imgElement = document.querySelector('.ReactCrop img') as HTMLImageElement;
-        const scaleX = image.naturalWidth / (imgElement?.width || image.width);
-        const scaleY = image.naturalHeight / (imgElement?.height || image.height);
-        
-        const pixelWidth = crop.unit === '%' ? (crop.width * image.naturalWidth) / 100 : crop.width * scaleX;
-        const pixelHeight = crop.unit === '%' ? (crop.height * image.naturalHeight) / 100 : crop.height * scaleY;
-        const pixelX = crop.unit === '%' ? (crop.x * image.naturalWidth) / 100 : crop.x * scaleX;
-        const pixelY = crop.unit === '%' ? (crop.y * image.naturalHeight) / 100 : crop.y * scaleY;
-
-        canvas.width = pixelWidth;
-        canvas.height = pixelHeight;
-        const ctx = canvas.getContext('2d');
-
-        if (!ctx) {
-          resolve(null);
-          return;
-        }
-
-        ctx.drawImage(
-          image,
-          pixelX,
-          pixelY,
-          pixelWidth,
-          pixelHeight,
-          0,
-          0,
-          pixelWidth,
-          pixelHeight
-        );
-
-        resolve(canvas.toDataURL('image/jpeg', 0.8));
-      };
-      image.onerror = (e) => reject(e);
-    });
-  }
 
   // Reset crop when search image changes
   useEffect(() => {
@@ -145,29 +110,29 @@ export function Home() {
       )}
 
       {isSearching && (
-        <div className="mb-8 flex flex-col gap-4 bg-surface p-6 rounded-3xl border border-white/5 shadow-2xl">
+        <div className="mb-8 flex flex-col gap-4 bg-surface p-6 rounded-3xl border border-black/5 dark:border-white/5 shadow-2xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               {searchImage ? (
                 <div>
-                  <h2 className="text-2xl font-display font-bold flex items-center gap-2">
+                  <h2 className="text-2xl font-display font-bold flex items-center gap-2 text-ink-invert">
                     <ScanSearch className="text-neon" />
                     Visual Search
                   </h2>
-                  <p className="text-sm text-gray-400 mt-1">
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                     {hasActiveCrop ? 'Showing live matches for selected area' : 'Draw a box to search a specific area'}
                   </p>
                 </div>
               ) : (
                 <div>
-                  <h2 className="text-2xl font-display font-bold">Search Results</h2>
-                  <p className="text-sm text-gray-400 mt-1">Showing results for "{searchQuery}"</p>
+                  <h2 className="text-2xl font-display font-bold text-ink-invert">Search Results</h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Showing results for "{searchQuery}"</p>
                 </div>
               )}
             </div>
             <button 
               onClick={clearSearch}
-              className="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-5 py-2.5 rounded-full transition-colors text-sm font-medium"
+              className="flex items-center gap-2 bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 px-5 py-2.5 rounded-full transition-colors text-sm font-medium text-ink-invert"
             >
               <X size={16} />
               Clear Search
@@ -175,7 +140,7 @@ export function Home() {
           </div>
 
           {searchImage && (
-            <div className="mt-4 flex justify-center bg-black/50 rounded-2xl p-4 border border-white/5">
+            <div className="mt-4 flex justify-center bg-black/5 dark:bg-black/50 rounded-2xl p-4 border border-black/5 dark:border-white/5">
               <ReactCrop 
                 crop={crop} 
                 onChange={c => setCrop(c)} 

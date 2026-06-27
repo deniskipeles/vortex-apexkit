@@ -4,14 +4,31 @@
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Outfit", ui-sans-serif, system-ui, sans-serif;
-  --color-neon: #ccff00;
-  --color-ink: #050505;
-  --color-surface: #121212;
+  --color-neon: var(--theme-neon);
+  --color-ink: var(--theme-ink);
+  --color-surface: var(--theme-surface);
+  --color-ink-invert: var(--theme-ink-invert);
+}
+
+:root {
+  /* Light Mode */
+  --theme-neon: #ccff00; /* We can use an accent color, maybe blue or keep neon */
+  --theme-ink: #f8fafc;
+  --theme-surface: #ffffff;
+  --theme-ink-invert: #050505;
+}
+
+:root.dark {
+  /* Dark Mode */
+  --theme-neon: #ccff00;
+  --theme-ink: #050505;
+  --theme-surface: #121212;
+  --theme-ink-invert: #ffffff;
 }
 
 body {
-  background-color: var(--color-ink);
-  color: #ffffff;
+  background-color: var(--theme-ink);
+  color: var(--theme-ink-invert);
   font-family: var(--font-sans);
 }
 

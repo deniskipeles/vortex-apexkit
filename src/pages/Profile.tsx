@@ -109,15 +109,15 @@ export function Profile() {
         </div>
 
         <div className="flex gap-3">
-          <button className="bg-surface hover:bg-white/10 border border-white/10 px-6 py-2.5 rounded-full font-medium transition-colors">
+          <button className="bg-surface hover:bg-black/5 dark:hover:bg-white/10 border border-black/10 dark:border-white/10 px-6 py-2.5 rounded-full font-medium transition-colors text-ink-invert">
             Share
           </button>
-          <button className="bg-surface hover:bg-white/10 border border-white/10 px-6 py-2.5 rounded-full font-medium transition-colors">
+          <button className="bg-surface hover:bg-black/5 dark:hover:bg-white/10 border border-black/10 dark:border-white/10 px-6 py-2.5 rounded-full font-medium transition-colors text-ink-invert">
             Edit Profile
           </button>
           <button 
             onClick={handleLogout}
-            className="bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20 px-6 py-2.5 rounded-full font-medium transition-colors flex items-center gap-2"
+            className="bg-red-500/10 text-red-500 hover:bg-red-500/20 border border-red-500/20 px-6 py-2.5 rounded-full font-medium transition-colors flex items-center gap-2"
           >
             <LogOut size={18} />
             Log Out
@@ -126,10 +126,10 @@ export function Profile() {
       </div>
 
       {/* Tabs */}
-      <div className="flex justify-center gap-8 mb-8 border-b border-white/10">
+      <div className="flex justify-center gap-8 mb-8 border-b border-black/10 dark:border-white/10">
         <button 
           onClick={() => setActiveTab('created')}
-          className={`pb-4 font-medium transition-colors relative ${activeTab === 'created' ? 'text-white' : 'text-gray-400 hover:text-gray-200'}`}
+          className={`pb-4 font-medium transition-colors relative ${activeTab === 'created' ? 'text-ink-invert' : 'text-gray-500 hover:text-ink-invert'}`}
         >
           Created
           {activeTab === 'created' && (
@@ -138,7 +138,7 @@ export function Profile() {
         </button>
         <button 
           onClick={() => setActiveTab('saved')}
-          className={`pb-4 font-medium transition-colors relative ${activeTab === 'saved' ? 'text-white' : 'text-gray-400 hover:text-gray-200'}`}
+          className={`pb-4 font-medium transition-colors relative ${activeTab === 'saved' ? 'text-ink-invert' : 'text-gray-500 hover:text-ink-invert'}`}
         >
           Saved
           {activeTab === 'saved' && (

@@ -15,8 +15,8 @@ export function CategoryPills({ selectedCategory, onSelectCategory }: CategoryPi
             onClick={() => onSelectCategory(cat)}
             className={`whitespace-nowrap px-6 py-2 rounded-full text-sm font-medium transition-all ${
               selectedCategory === cat 
-                ? 'bg-white text-ink' 
-                : 'bg-surface text-gray-300 hover:bg-white/10 border border-white/5'
+                ? 'bg-ink-invert text-ink' 
+                : 'bg-surface text-gray-600 dark:text-gray-300 hover:bg-black/5 dark:hover:bg-white/10 border border-black/5 dark:border-white/5'
             }`}
           >
             {cat}

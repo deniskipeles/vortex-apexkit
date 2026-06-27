@@ -40,7 +40,7 @@ The frontend is now fully integrated with the ApexKit SDK. All mock data generat
 Before the app can display data, you **MUST** create the following collections in your ApexKit Admin Dashboard:
 
 1.  **`users`** (System Collection): Ensure `name`, `handle`, and `avatar` fields exist if you want to display them.
-2.  **`pins`**: Create this collection with fields `title`, `description`, `image` (Text URL or File), `category`, `author_id` (Relation to `users`), and `height` (Number).
+2.  **`pins`**: Create this collection with fields `title`, `description`, `image` (Text URL or File), `category`, `author_id` (Relation to `users`), `height` (Number), `tags` (JSON), and `likes_count` (Number).
 3.  **`saved_pins`**: Create this collection with fields `user_id` (Relation to `users`) and `pin_id` (Relation to `pins`).
 4.  **`likes`**: Create this collection with fields `user_id` (Relation to `users`) and `pin_id` (Relation to `pins`).
     -   **Important Hook**: You should add a server-side hook (or trigger) that increments/decrements the `likes_count` field on the `pins` collection whenever a record is created or deleted in this collection.
