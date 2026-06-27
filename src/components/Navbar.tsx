@@ -29,9 +29,11 @@ export function Navbar() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Sync localQuery when searchQuery changes from elsewhere (like clearSearch)
+  // Sync localQuery when searchQuery is cleared externally
   useEffect(() => {
-    setLocalQuery(searchQuery);
+    if (searchQuery === '') {
+      setLocalQuery('');
+    }
   }, [searchQuery]);
 
   // Instant Search / Autocomplete
@@ -61,11 +63,11 @@ export function Navbar() {
 
   // Debounce context update to prevent Android cursor jumping
   useEffect(() => {
-    if (searchQuery !== localQuery) {
-      const timer = setTimeout(() => setSearchQuery(localQuery), 50);
-      return () => clearTimeout(timer);
-    }
-  }, [localQuery, searchQuery, setSearchQuery]);
+    const timer = setTimeout(() => {
+      setSearchQuery(localQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [localQuery, setSearchQuery]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -128,7 +130,7 @@ export function Navbar() {
               onFocus={() => setIsSearchFocused(true)}
               onKeyDown={handleKeyDown}
               placeholder="Search for ideas..." 
-              className="w-full bg-surface border border-black/10 dark:border-white/10 rounded-full py-3 pl-12 pr-20 text-sm focus:outline-none focus:border-neon/50 focus:ring-1 focus:ring-neon/50 transition-all placeholder-gray-500 text-ink-invert relative z-10"
+              className="w-full bg-surface border border-black/10 dark:border-white/10 rounded-full py-3 pl-12 pr-20 text-sm focus:outline-none focus:border-neon/50 focus:ring-1 focus:ring-neon/50 transition-all placeholder-gray-500 text-gray-900 dark:text-white relative z-10"
             />
             <div className="absolute inset-y-0 right-0 pr-2 flex items-center gap-1 z-10">
               {localQuery && (
@@ -137,7 +139,7 @@ export function Navbar() {
                     setLocalQuery('');
                     setSearchQuery('');
                   }} 
-                  className="p-2 text-gray-400 hover:text-ink-invert transition-colors"
+                  className="p-2 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
                   title="Clear search"
                 >
                   <X size={16} />
