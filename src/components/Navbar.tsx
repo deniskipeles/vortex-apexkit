@@ -1,6 +1,6 @@
 import { Search, Bell, MessageCircle, Plus, Camera, X, Loader2, Moon, Sun } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import React, { useRef, useState, useEffect, useLayoutEffect } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useSearch } from '../context/SearchContext';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -12,7 +12,7 @@ export function Navbar() {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const wsClientRef = useRef<ApexKitRealtimeWSClient | null>(null);
-  const cursorRef = useRef<{ start: number | null; end: number | null }>({ start: null, end: null });
+  const isComposing = useRef(false);
   const navigate = useNavigate();
   const location = useLocation();
   const [localQuery, setLocalQuery] = useState(searchQuery);
@@ -53,7 +53,12 @@ export function Navbar() {
   }, [user]);
 
   // Instant Autocomplete search via WebSocket to avoid HTTP roundtrip overhead
+  // Skipped entirely while an IME composition is active (mobile Gboard/Swiftkey/etc),
+  // since re-rendering mid-composition desyncs the IME's cursor state from React's
+  // and causes characters to insert out of order on Android.
   useEffect(() => {
+    if (isComposing.current) return;
+
     const fetchSuggestions = async () => {
       if (!localQuery || localQuery.length < 2) {
         setSuggestions([]);
@@ -91,16 +96,6 @@ export function Navbar() {
     return () => clearTimeout(debounceTimer);
   }, [localQuery]);
 
-  // Restore virtual cursor selection range on mobile keyboards
-  useLayoutEffect(() => {
-    if (searchInputRef.current && cursorRef.current.start !== null) {
-      searchInputRef.current.setSelectionRange(
-        cursorRef.current.start,
-        cursorRef.current.end
-      );
-    }
-  }, [localQuery]);
-
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -117,12 +112,17 @@ export function Navbar() {
   };
 
   const handleTextSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    cursorRef.current = {
-      start: e.target.selectionStart,
-      end: e.target.selectionEnd
-    };
     setLocalQuery(e.target.value);
     if (e.target.value && searchImage) setSearchImage(null); // Clear image search when typing
+  };
+
+  const handleCompositionStart = () => {
+    isComposing.current = true;
+  };
+
+  const handleCompositionEnd = (e: React.CompositionEvent<HTMLInputElement>) => {
+    isComposing.current = false;
+    setLocalQuery((e.target as HTMLInputElement).value);
   };
 
   // Submit search only when user hits 'Enter'
@@ -163,10 +163,17 @@ export function Navbar() {
               type="text" 
               value={localQuery}
               onChange={handleTextSearch}
+              onCompositionStart={handleCompositionStart}
+              onCompositionEnd={handleCompositionEnd}
               onFocus={() => setIsSearchFocused(true)}
               onKeyDown={handleKeyDown}
               placeholder="Search for ideas..." 
               className="w-full bg-surface border border-black/10 dark:border-white/10 rounded-full py-3 pl-12 pr-20 text-sm focus:outline-none focus:border-neon/50 focus:ring-1 focus:ring-neon/50 transition-all placeholder-gray-500 text-ink-invert relative z-10"
+              style={{ WebkitTextFillColor: 'currentColor', caretColor: 'currentColor' }}
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck="false"
             />
             <div className="absolute inset-y-0 right-0 pr-2 flex items-center gap-1 z-10">
               {localQuery && (
