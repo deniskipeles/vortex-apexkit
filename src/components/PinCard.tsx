@@ -82,11 +82,15 @@ export function PinCard({ id, image, title, author, height, initiallySaved = fal
         onClick={() => navigate(`/pin/${id}`)}
         className="block relative rounded-2xl overflow-hidden bg-surface shadow-md"
       >
+        {/* Aspect-ratio driven image — scales correctly to any column width.
+            300 is the base width used when height was originally calculated
+            in CreatePin.tsx (aspectRatio * 300), so this reconstructs the
+            correct proportions regardless of screen size. */}
         <img
           src={image || null}
           alt={title}
           className="w-full object-cover transition-transform duration-700 group-hover:scale-105"
-          style={{ height: `${height}px` }}
+          style={{ aspectRatio: `300 / ${height}` }}
           referrerPolicy="no-referrer"
         />
 
@@ -110,9 +114,8 @@ export function PinCard({ id, image, title, author, height, initiallySaved = fal
             <button
               onClick={handleToggleSave}
               disabled={isSaving}
-              className={`font-bold py-2 px-5 rounded-full transition-all transform hover:scale-105 active:scale-95 flex items-center gap-1 ${
-                isSaved ? 'bg-neon text-ink hover:opacity-90' : 'bg-black/60 text-white hover:bg-black/80'
-              }`}
+              className={`font-bold py-2 px-5 rounded-full transition-all transform hover:scale-105 active:scale-95 flex items-center gap-1 ${isSaved ? 'bg-neon text-ink hover:opacity-90' : 'bg-black/60 text-white hover:bg-black/80'
+                }`}
             >
               {isSaving ? (
                 <Loader2 size={16} className="animate-spin" />
@@ -129,7 +132,7 @@ export function PinCard({ id, image, title, author, height, initiallySaved = fal
               target="_blank"
               rel="noreferrer"
               onClick={(e) => e.stopPropagation()}
-              className="flex items-center gap-2 bg-white/10 backdrop-blur-md py-2 px-3 rounded-full hover:bg-white/20 transition-colors text-xs font-medium"
+              className="flex items-center gap-2 bg-white/10 backdrop-blur-md py-2 px-3 rounded-full hover:bg-white/20 transition-colors text-xs font-medium text-white"
             >
               <ArrowUpRight size={14} />
               <span>vortex.io</span>
@@ -144,7 +147,7 @@ export function PinCard({ id, image, title, author, height, initiallySaved = fal
         </div>
       </div>
 
-      {/* Title + like row — fully constrained so long titles truncate */}
+      {/* Title + like row */}
       <div className="mt-3 px-1 flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
           <h3 className="font-medium text-sm text-ink-invert line-clamp-2 leading-snug break-words">
@@ -155,9 +158,8 @@ export function PinCard({ id, image, title, author, height, initiallySaved = fal
         <button
           onClick={handleToggleLike}
           disabled={isLiking}
-          className={`flex-shrink-0 flex items-center gap-1 text-xs font-medium mt-0.5 transition-colors ${
-            isLiked ? 'text-red-500' : 'text-gray-500 hover:text-red-500'
-          }`}
+          className={`flex-shrink-0 flex items-center gap-1 text-xs font-medium mt-0.5 transition-colors ${isLiked ? 'text-red-500' : 'text-gray-500 hover:text-red-500'
+            }`}
         >
           {isLiking
             ? <Loader2 size={14} className="animate-spin" />
