@@ -1,58 +1,92 @@
-import { CategoryPills, CATEGORIES } from '../components/CategoryPills';
+import { CategoryPills } from '../components/CategoryPills';
 import { MasonryGrid, MasonryGridSkeleton } from '../components/MasonryGrid';
 import { useState, useEffect } from 'react';
 import { useSearch } from '../context/SearchContext';
-import { X, ScanSearch } from 'lucide-react';
+import { X, ScanSearch, Loader2 } from 'lucide-react'; // <--- IMPORTED Loader2
 import ReactCrop, { type Crop } from 'react-image-crop';
 import { apex } from '../lib/apex';
 import { useAuth } from '../context/AuthContext';
 import { getCroppedImg } from '../lib/imageUtils';
 import 'react-image-crop/dist/ReactCrop.css';
 
+const PER_PAGE = 15; // Standard page size for smooth layout loads
+
 export function Home() {
   const { user } = useAuth();
-  const [selectedCategory, setSelectedCategory] = useState(CATEGORIES[0]);
+  const [categories, setCategories] = useState<string[]>(['For You']);
+  const [selectedCategory, setSelectedCategory] = useState('For You');
   const [isLoading, setIsLoading] = useState(true);
   const [pins, setPins] = useState<any[]>([]);
   const { searchQuery, searchImage, clearSearch } = useSearch();
   const [crop, setCrop] = useState<Crop>();
   const [completedCrop, setCompletedCrop] = useState<Crop | null>(null);
 
+  // Pagination states
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+
+  // Fetch dynamic database categories on mount
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const list = await apex.scripts.run('get-categories', {});
+        if (Array.isArray(list)) {
+          setCategories(['For You', ...list]);
+        }
+      } catch (err) {
+        console.error("Failed to fetch dynamic categories:", err);
+      }
+    };
+    loadCategories();
+  }, []);
+
+  // Reset page and clear list immediately on filter/query changes for quick UX feedback
+  useEffect(() => {
+    setPage(1);
+    setPins([]);
+  }, [selectedCategory, searchQuery, searchImage, completedCrop]);
+
   useEffect(() => {
     const fetchPins = async () => {
       setIsLoading(true);
       try {
         let results: any[] = [];
+        let totalCount = 0;
+        const currentLimit = page * PER_PAGE;
 
         if (searchImage) {
-          // Visual Search
+          // Visual Search (scales limit dynamically with page size)
           if (completedCrop && completedCrop.width && completedCrop.height) {
             try {
               const imgElement = document.querySelector('.ReactCrop img') as HTMLImageElement;
               const croppedImage = await getCroppedImg(searchImage, completedCrop, imgElement);
               if (croppedImage) {
-                results = await apex.collection('pins').searchImageVectorWithImage(croppedImage, 20);
+                results = await apex.collection('pins').searchImageVectorWithImage(croppedImage, currentLimit);
               } else {
-                results = await apex.collection('pins').searchImageVectorWithImage(searchImage, 20);
+                results = await apex.collection('pins').searchImageVectorWithImage(searchImage, currentLimit);
               }
             } catch (err) {
               console.error("Failed to crop image for search:", err);
-              results = await apex.collection('pins').searchImageVectorWithImage(searchImage, 20);
+              results = await apex.collection('pins').searchImageVectorWithImage(searchImage, currentLimit);
             }
           } else {
-            results = await apex.collection('pins').searchImageVectorWithImage(searchImage, 20);
+            results = await apex.collection('pins').searchImageVectorWithImage(searchImage, currentLimit);
           }
+          totalCount = results.length;
         } else if (searchQuery) {
           // Text Search using multi-modal vector
-          results = await apex.collection('pins').searchImageVectorWithText(searchQuery, 20);
+          results = await apex.collection('pins').searchImageVectorWithText(searchQuery, currentLimit);
+          totalCount = results.length;
         } else {
-          // Default Feed / Category
+          // Default Feed / Category (Using native SQL page offsets)
           const list = await apex.collection('pins').list({
             filter: selectedCategory !== 'For You' ? { category: selectedCategory } : undefined,
-            per_page: 50,
+            page: page,
+            per_page: PER_PAGE,
             expand: 'author_id'
           });
           results = list.items;
+          totalCount = list.total;
         }
 
         const mappedPins = (results || []).map((record: any) => {
@@ -76,7 +110,8 @@ export function Home() {
         let savedPinIds = new Set<string | number>();
 
         if (user && mappedPins.length > 0) {
-          const pinIds = mappedPins.map(p => p.id);
+          const allPins = page > 1 ? [...pins, ...mappedPins] : mappedPins;
+          const pinIds = Array.from(new Set(allPins.map(p => p.id)));
           try {
             const [likesRes, savedRes] = await Promise.all([
               apex.collection('likes').list({
@@ -124,7 +159,27 @@ export function Home() {
           initiallySaved: savedPinIds.has(p.id)
         }));
 
-        setPins(finalPins);
+        if (page === 1) {
+          setPins(finalPins);
+          if (searchImage || searchQuery) {
+            setHasMore(results.length >= currentLimit);
+          } else {
+            setHasMore(finalPins.length < totalCount);
+          }
+        } else {
+          setPins(prev => {
+            const existingIds = new Set(prev.map(p => p.id));
+            const uniqueNew = finalPins.filter(p => !existingIds.has(p.id));
+            const combined = [...prev, ...uniqueNew];
+            
+            if (searchImage || searchQuery) {
+              setHasMore(results.length >= currentLimit);
+            } else {
+              setHasMore(combined.length < totalCount);
+            }
+            return combined;
+          });
+        }
       } catch (err: any) {
         if (!err.message?.includes('Rate limit')) {
           console.error("Failed to fetch pins:", err);
@@ -140,7 +195,7 @@ export function Home() {
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [selectedCategory, searchQuery, searchImage, completedCrop, user]);
+  }, [selectedCategory, searchQuery, searchImage, completedCrop, page, user]);
 
   // Reset crop when search image changes
   useEffect(() => {
@@ -155,6 +210,7 @@ export function Home() {
     <>
       {!isSearching && (
         <CategoryPills
+          categories={categories}
           selectedCategory={selectedCategory}
           onSelectCategory={setSelectedCategory}
         />
@@ -209,11 +265,33 @@ export function Home() {
         </div>
       )}
 
-      {isLoading ? (
-        <MasonryGridSkeleton count={20} />
+      {isLoading && page === 1 ? (
+        <MasonryGridSkeleton count={15} />
       ) : (
         pins.length > 0 ? (
-          <MasonryGrid pins={pins} />
+          <>
+            <MasonryGrid pins={pins} />
+            
+            {/* Load More Button */}
+            {hasMore && (
+              <div className="flex justify-center mt-12 mb-6">
+                <button
+                  onClick={() => setPage(prev => prev + 1)}
+                  disabled={isLoading}
+                  className="bg-surface hover:bg-black/5 dark:hover:bg-white/10 border border-black/10 dark:border-white/10 text-ink-invert px-8 py-3.5 rounded-full font-bold text-md transition-all flex items-center gap-2 hover:scale-105 active:scale-95 disabled:opacity-50 shadow-md cursor-pointer"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="animate-spin" size={20} />
+                      <span>Loading more...</span>
+                    </>
+                  ) : (
+                    <span>Load More</span>
+                  )}
+                </button>
+              </div>
+            )}
+          </>
         ) : (
           <div className="text-center py-20">
             <p className="text-gray-400 text-lg">No pins found matching your search.</p>

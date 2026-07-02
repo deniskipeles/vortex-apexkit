@@ -1,0 +1,330 @@
+{
+  "collections": [
+    {
+      "id": 1,
+      "index": "ea44c16c-2728-43c3-b82c-784217f08a77",
+      "name": "pins",
+      "schema": {
+        "composite_unique": [],
+        "field_history": {},
+        "fields": {
+          "author_id": {
+            "auto": true,
+            "default": null,
+            "dimension": null,
+            "max": null,
+            "max_length": null,
+            "max_size": null,
+            "mime_types": null,
+            "min": null,
+            "min_length": null,
+            "options": null,
+            "ose_indexed": false,
+            "pattern": null,
+            "position": 4,
+            "relation_to": null,
+            "required": false,
+            "sql_indexed": true,
+            "type": "owner",
+            "uid": "c3eb1d8e",
+            "unique": null,
+            "vectorize": false
+          },
+          "category": {
+            "auto": false,
+            "default": null,
+            "dimension": null,
+            "max": null,
+            "max_length": null,
+            "max_size": null,
+            "mime_types": null,
+            "min": null,
+            "min_length": null,
+            "options": null,
+            "ose_indexed": false,
+            "pattern": null,
+            "position": 3,
+            "relation_to": null,
+            "required": false,
+            "sql_indexed": false,
+            "type": "string",
+            "uid": "b915cd9c",
+            "unique": null,
+            "vectorize": false
+          },
+          "description": {
+            "auto": false,
+            "default": null,
+            "dimension": null,
+            "max": null,
+            "max_length": null,
+            "max_size": null,
+            "mime_types": null,
+            "min": null,
+            "min_length": null,
+            "options": null,
+            "ose_indexed": true,
+            "pattern": null,
+            "position": 1,
+            "relation_to": null,
+            "required": false,
+            "sql_indexed": false,
+            "type": "text",
+            "uid": "dec5c2b",
+            "unique": null,
+            "vectorize": true
+          },
+          "height": {
+            "auto": false,
+            "default": null,
+            "dimension": null,
+            "max": null,
+            "max_length": null,
+            "max_size": null,
+            "mime_types": null,
+            "min": null,
+            "min_length": null,
+            "options": null,
+            "ose_indexed": false,
+            "pattern": null,
+            "position": 6,
+            "relation_to": null,
+            "required": false,
+            "sql_indexed": false,
+            "type": "number",
+            "uid": "4fd387f0",
+            "unique": null,
+            "vectorize": false
+          },
+          "image": {
+            "auto": false,
+            "default": null,
+            "dimension": null,
+            "max": null,
+            "max_length": null,
+            "max_size": null,
+            "mime_types": null,
+            "min": null,
+            "min_length": null,
+            "options": null,
+            "ose_indexed": true,
+            "pattern": null,
+            "position": 2,
+            "relation_to": null,
+            "required": true,
+            "sql_indexed": false,
+            "type": "file",
+            "uid": "947757bd",
+            "unique": null,
+            "vectorize": true
+          },
+          "likes_count": {
+            "auto": false,
+            "default": "0",
+            "dimension": null,
+            "max": null,
+            "max_length": null,
+            "max_size": null,
+            "mime_types": null,
+            "min": 0.0,
+            "min_length": 0,
+            "options": null,
+            "ose_indexed": false,
+            "pattern": null,
+            "position": 7,
+            "relation_to": null,
+            "required": false,
+            "sql_indexed": true,
+            "type": "number",
+            "uid": "e4704e42",
+            "unique": null,
+            "vectorize": false
+          },
+          "metadata": {
+            "auto": false,
+            "default": "{}",
+            "dimension": null,
+            "max": null,
+            "max_length": null,
+            "max_size": null,
+            "mime_types": null,
+            "min": null,
+            "min_length": null,
+            "options": null,
+            "ose_indexed": false,
+            "pattern": null,
+            "position": 8,
+            "relation_to": null,
+            "required": false,
+            "sql_indexed": false,
+            "type": "json",
+            "uid": "84a4503f",
+            "unique": null,
+            "vectorize": false
+          },
+          "tags": {
+            "auto": false,
+            "default": "[]",
+            "dimension": null,
+            "max": null,
+            "max_length": null,
+            "max_size": null,
+            "mime_types": null,
+            "min": null,
+            "min_length": null,
+            "options": null,
+            "ose_indexed": false,
+            "pattern": null,
+            "position": 5,
+            "relation_to": null,
+            "required": false,
+            "sql_indexed": false,
+            "type": "json",
+            "uid": "ee896d0e",
+            "unique": null,
+            "vectorize": false
+          },
+          "title": {
+            "auto": false,
+            "default": null,
+            "dimension": null,
+            "max": null,
+            "max_length": null,
+            "max_size": null,
+            "mime_types": null,
+            "min": null,
+            "min_length": null,
+            "options": null,
+            "ose_indexed": true,
+            "pattern": null,
+            "position": 0,
+            "relation_to": null,
+            "required": true,
+            "sql_indexed": false,
+            "type": "string",
+            "uid": "42bc917",
+            "unique": null,
+            "vectorize": false
+          }
+        },
+        "policies": {
+          "create": "admin",
+          "delete": "admin",
+          "read": "public",
+          "update": "admin"
+        },
+        "relations": {}
+      }
+    },
+    {
+      "id": 2,
+      "index": "03269282-9099-4ef3-a118-6f205388c27b",
+      "name": "saved_pins",
+      "schema": {
+        "composite_unique": [
+          [
+            "user_id",
+            "pin_id"
+          ]
+        ],
+        "field_history": {},
+        "fields": {
+          "user_id": {
+            "auto": true,
+            "default": null,
+            "dimension": null,
+            "max": null,
+            "max_length": null,
+            "max_size": null,
+            "mime_types": null,
+            "min": null,
+            "min_length": null,
+            "options": null,
+            "ose_indexed": false,
+            "pattern": null,
+            "position": 0,
+            "relation_to": null,
+            "required": true,
+            "sql_indexed": true,
+            "type": "owner",
+            "uid": "b7402af5",
+            "unique": null,
+            "vectorize": false
+          }
+        },
+        "policies": {
+          "create": "auth",
+          "delete": "owner:user_id",
+          "read": "public",
+          "update": "owner:user_id"
+        },
+        "relations": {
+          "pin_id": {
+            "position": 1,
+            "relation_type": "many",
+            "required": true,
+            "target_collection": "pins",
+            "target_index": "ea44c16c-2728-43c3-b82c-784217f08a77",
+            "uid": "c5baaf4e"
+          }
+        }
+      }
+    },
+    {
+      "id": 3,
+      "index": "e8d83fd2-d157-4a9f-98b4-19248a837882",
+      "name": "likes",
+      "schema": {
+        "composite_unique": [
+          [
+            "user_id",
+            "pin_id"
+          ]
+        ],
+        "field_history": {},
+        "fields": {
+          "user_id": {
+            "auto": false,
+            "default": null,
+            "dimension": null,
+            "max": null,
+            "max_length": null,
+            "max_size": null,
+            "mime_types": null,
+            "min": null,
+            "min_length": null,
+            "options": null,
+            "ose_indexed": false,
+            "pattern": null,
+            "position": 0,
+            "relation_to": null,
+            "required": true,
+            "sql_indexed": true,
+            "type": "owner",
+            "uid": "13f8fefa",
+            "unique": null,
+            "vectorize": false
+          }
+        },
+        "policies": {
+          "create": "public",
+          "delete": "admin",
+          "read": "public",
+          "update": "admin"
+        },
+        "relations": {
+          "pin_id": {
+            "position": 1,
+            "relation_type": "many",
+            "required": true,
+            "target_collection": "pins",
+            "target_index": "ea44c16c-2728-43c3-b82c-784217f08a77",
+            "uid": "291c95fc"
+          }
+        }
+      }
+    }
+  ],
+  "exported_at": "2026-07-02T11:33:08.663040120+00:00",
+  "strategy": "skip"
+}

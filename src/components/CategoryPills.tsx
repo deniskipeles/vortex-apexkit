@@ -1,15 +1,14 @@
-export const CATEGORIES = ['For You', 'Architecture', 'Cyberpunk', 'Nature', 'Minimal', 'Abstract', 'Portrait', 'Fashion', 'Tech', 'Space'];
-
 interface CategoryPillsProps {
+  categories: string[];
   selectedCategory: string;
   onSelectCategory: (category: string) => void;
 }
 
-export function CategoryPills({ selectedCategory, onSelectCategory }: CategoryPillsProps) {
+export function CategoryPills({ categories, selectedCategory, onSelectCategory }: CategoryPillsProps) {
   return (
     <div className="w-full overflow-x-auto no-scrollbar py-4 mb-4">
       <div className="flex gap-3 px-1">
-        {CATEGORIES.map((cat) => (
+        {categories.map((cat) => (
           <button 
             key={cat}
             onClick={() => onSelectCategory(cat)}

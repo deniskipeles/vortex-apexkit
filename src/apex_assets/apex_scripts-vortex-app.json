@@ -1,0 +1,20 @@
+[
+  {
+    "id": 1,
+    "name": "toggle-like",
+    "trigger_type": "manual",
+    "target_collection": null,
+    "code": "export default async function(req) {\n    const data = await req.json();\n    const pinId = data.pinId+\"\";\n    \n    if (!pinId) {\n        return new Response(JSON.stringify({ error: \"Missing pinId\" }), { status: 400 });\n    }\n\n    // Extract User ID from the JWT Authorization token\n    const authHeader = req.headers.get(\"authorization\") || req.headers.get(\"Authorization\");\n    if (!authHeader || !authHeader.startsWith(\"Bearer \")) {\n        return new Response(JSON.stringify({ error: \"Unauthorized\" }), { status: 401 });\n    }\n    \n    const token = authHeader.split(\" \")[1];\n    let userId;\n    try {\n        const payloadSegment = token.split(\".\")[1];\n        const decodedPayload = JSON.parse($util.base64Decode(payloadSegment));\n        userId = Number(decodedPayload.uid);\n    } catch (e) {\n        return new Response(JSON.stringify({ error: \"Invalid token\" }), { status: 401 });\n    }\n\n    if (!userId) {\n        return new Response(JSON.stringify({ error: \"Unauthorized\" }), { status: 401 });\n    }\n\n    // 1. Check if the like already exists using $db.records directly\n    const existingLikes = await $db.records.list(\"likes\", {\n        filter: JSON.stringify({\n            user_id: userId,\n            pin_id: pinId\n        })\n    });\n\n    let liked = false;\n    if (existingLikes && existingLikes.items && existingLikes.items.length > 0) {\n        // Already liked -> Remove the like record\n        const likeId = existingLikes.items[0].id;\n        await $db.records.delete(\"likes\", likeId);\n    } else {\n        // Not liked yet -> Register a new like record\n        await $db.records.create(\"likes\", {\n            user_id: userId,\n            pin_id: pinId\n        });\n        liked = true;\n    }\n\n    // 2. Count the current total likes for this pin\n    const totalLikes = await $db.records.list(\"likes\", {\n        filter: JSON.stringify({\n            pin_id: pinId\n        }),\n        limit: 1 // Only need the total metadata attribute to find total count\n    });\n\n    const likesCount = totalLikes.total || 0;\n\n    // 3. Save the aggregated total in the likes_count field of the pin record\n    await $db.records.update(\"pins\", pinId, {\n        likes_count: likesCount\n    });\n\n    return new Response({ liked, likesCount, pinId });\n}",
+    "active": true,
+    "visibility": "private"
+  },
+  {
+    "id": 11,
+    "name": "get-categories",
+    "trigger_type": "manual",
+    "target_collection": null,
+    "code": "export const graphql = {\n    parent: \"Query\",\n    name: \"getDistinctCategories\",\n    args: {},\n    returnType: \"[String!]\"\n};\n\nexport default async function(req) {\n    try {\n        // Execute a native SQL group-by query via the Query Engine\n        const results = await $db.query({\n            from: \"pins\",\n            select: [\n                {\n                    field: \"category\",\n                    as: \"category\"\n                }\n            ],\n            group_by: [\"category\"]\n        });\n\n        // Map database result rows to a clean, flat array of unique strings\n        const categories = results\n            .map(row => row.category)\n            .filter(Boolean);\n\n        return new Response(categories);\n    } catch (e) {\n        return new Response({ error: e.toString() }, { status: 500 });\n    }\n}",
+    "active": true,
+    "visibility": "private"
+  }
+]
